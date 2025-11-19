@@ -1,1 +1,17 @@
+# Arquivos de Dados
+# O banco de dados é criado localmente por cada desenvolvedor e NÃO deve ser versionado.
+educonnect.db
 
+# Pastas e arquivos gerados pelo PyInstaller (o executável e sua estrutura)
+/dist
+/build
+*.spec
+*.exe
+
+# Pastas e arquivos gerados pelo Python
+__pycache__/
+*.pyc
+
+# Ambientes Virtuais (se você usa 'venv' ou '.venv' para isolar as dependências)
+venv/
+.venv/
