@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
+from datetime import datetime
 
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -41,7 +42,7 @@ def criar_tabelas():
                 Nome VARCHAR(45),
                 DataNascimento DATE,
                 Endereco VARCHAR(100),
-                placeholder INT
+                placeholder INT NULL
             )
         """)
 
@@ -114,13 +115,19 @@ def verificar_credenciais(username, senha):
 # -------------------------------
 
 def inserir_aluno(RA, Nome, DataNascimento, Endereco):
+    """
+    Insere um aluno. placeholder será sempre NULL.
+    DataNascimento deve ser do tipo datetime.date
+    """
     try:
         conn = get_conexao()
         cursor = conn.cursor()
+
         cursor.execute("""
             INSERT INTO alunos (RA, Nome, DataNascimento, Endereco, placeholder)
-            VALUES (%s, %s, %s, %s, NULL)
+            VALUES (%s, %s, %s, NULL)
         """, (RA, Nome, DataNascimento, Endereco))
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -128,6 +135,7 @@ def inserir_aluno(RA, Nome, DataNascimento, Endereco):
     except Error as e:
         print("[ERRO] inserir_aluno:", e)
         return False
+
 
 def buscar_alunos():
     try:
@@ -145,6 +153,7 @@ def buscar_alunos():
         print("[ERRO] buscar_alunos:", e)
         return []
 
+
 def buscar_aluno_por_id(idAluno):
     try:
         conn = get_conexao()
@@ -161,10 +170,12 @@ def buscar_aluno_por_id(idAluno):
         print("[ERRO] buscar_aluno_por_id:", e)
         return None
 
+
 def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
+
         cursor.execute("""
             UPDATE alunos SET
                 RA = %s,
@@ -173,14 +184,17 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
                 Endereco = %s
             WHERE idALUNOS = %s
         """, (RA, Nome, DataNascimento, Endereco, idAluno))
+
         conn.commit()
         ok = cursor.rowcount > 0
         cursor.close()
         conn.close()
         return ok
+
     except Error as e:
         print("[ERRO] atualizar_aluno:", e)
         return False
+
 
 def deletar_aluno(idAluno):
     try:
