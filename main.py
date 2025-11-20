@@ -7,6 +7,7 @@ from database import (
     criar_tabelas,
     inserir_primeiro_usuario,
     verificar_credenciais,
+    # funções CRUD ajustadas
     inserir_aluno,
     buscar_alunos,
     atualizar_aluno,
@@ -18,6 +19,7 @@ from database import (
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
+
 # ============================================================
 #                       LOGIN FRAME
 # ============================================================
@@ -25,9 +27,7 @@ ctk.set_default_color_theme("blue")
 class LoginFrame(ctk.CTkFrame):
     def __init__(self, master, app_controller):
         super().__init__(master)
-
         self.app_controller = app_controller
-
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(5, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -74,12 +74,12 @@ class LoginFrame(ctk.CTkFrame):
     def perform_login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-
         if verificar_credenciais(username, password):
             self.message_label.configure(text="", text_color="green")
             self.app_controller.show_crud_screen()
         else:
             self.message_label.configure(text="Nome de usuário ou senha incorretos.", text_color="red")
+
 
 # ============================================================
 #                       CRUD FRAME
@@ -144,12 +144,11 @@ class CRUDFrame(ctk.CTkFrame):
 
         self.entries = {}
         campos = [
+            ("RA", "int"),
             ("Nome", "text"),
-            ("Data de Nasc.", "text"),
-            ("Série", "int"),
-            ("Escola", "text"),
-            ("Faltas", "int"),
-            ("Renda Familiar (R$)", "float")
+            ("DataNascimento", "text"),
+            ("Endereco", "text"),
+            ("placeholder", "int")
         ]
 
         for label_text, tipo in campos:
@@ -174,7 +173,6 @@ class CRUDFrame(ctk.CTkFrame):
         )
         self.clear_button.pack(fill="x", padx=20, pady=(0,20))
 
-        # carregamento inicial da lista
         self.carregar_alunos()
 
     def carregar_alunos(self):
@@ -183,10 +181,10 @@ class CRUDFrame(ctk.CTkFrame):
 
         alunos = buscar_alunos()
 
-        headers = ["ID", "Nome", "Série", "Faltas", "Renda"]
+        headers = ["ID", "RA", "Nome", "DataNascimento", "Endereco", "placeholder"]
         header_frame = ctk.CTkFrame(self.alunos_list_frame, fg_color=("gray80","gray25"))
         header_frame.pack(fill="x", padx=0, pady=(0,5))
-        header_frame.columnconfigure((0,1,2,3,4), weight=1)
+        header_frame.columnconfigure(tuple(range(len(headers))), weight=1)
 
         for col, text in enumerate(headers):
             ctk.CTkLabel(
@@ -197,19 +195,12 @@ class CRUDFrame(ctk.CTkFrame):
 
         for aluno in alunos:
             aluno_id = aluno[0]
-            nome = aluno[1]
-            serie = aluno[3]
-            faltas = aluno[5]
-            renda = aluno[6]
-
             row = ctk.CTkFrame(self.alunos_list_frame, fg_color="transparent")
             row.pack(fill="x", padx=0, pady=2)
-            row.columnconfigure((0,1,2,3,4), weight=1)
-
+            row.columnconfigure(tuple(range(len(headers))), weight=1)
             row.bind("<Button-1>", lambda e, id=aluno_id: self.carregar_aluno_para_edicao(id))
 
-            valores = [aluno_id, nome, serie, faltas, f"R$ {renda:.2f}"]
-
+            valores = aluno  # usa todas as colunas
             for col, val in enumerate(valores):
                 label = ctk.CTkLabel(row, text=str(val), anchor="w", cursor="hand2")
                 label.grid(row=0, column=col, padx=5, sticky="w")
@@ -219,17 +210,12 @@ class CRUDFrame(ctk.CTkFrame):
         aluno = buscar_aluno_por_id(aluno_id)
         if aluno:
             self.aluno_selecionado_id = aluno_id
-            dados = aluno[1:]
+            dados = aluno[1:]  # ignora o ID
 
             for i, key in enumerate(self.entries.keys()):
                 entry, _ = self.entries[key]
                 entry.delete(0, tk.END)
-
-                valor = str(dados[i])
-                if key == "Renda Familiar (R$)":
-                    valor = f"{dados[i]:.2f}"
-
-                entry.insert(0, valor)
+                entry.insert(0, str(dados[i]))
 
             self.save_button.configure(
                 text="💾 Atualizar Aluno Existente",
@@ -249,19 +235,16 @@ class CRUDFrame(ctk.CTkFrame):
             for (entry, tipo), valor in zip(self.entries.values(), dados):
                 if tipo == "int":
                     dados_tipados.append(int(valor))
-                elif tipo == "float":
-                    dados_tipados.append(float(valor))
                 else:
                     dados_tipados.append(valor)
             return dados_tipados
         except ValueError:
-            messagebox.showerror("Erro", "Série, Faltas e Renda Familiar devem ser números válidos.")
+            messagebox.showerror("Erro", "RA e placeholder devem ser números válidos.")
             return None
 
     def salvar_aluno(self):
         dados_raw = [entry.get() for entry, _ in self.entries.values()]
         dados_validados = self.validar_dados(dados_raw)
-
         if not dados_validados:
             return
 
@@ -283,7 +266,6 @@ class CRUDFrame(ctk.CTkFrame):
         if not self.aluno_selecionado_id:
             messagebox.showwarning("Aviso", "Selecione um aluno na lista para deletar.")
             return
-
         if messagebox.askyesno("Confirmação", f"Tem certeza que deseja deletar o aluno ID {self.aluno_selecionado_id}?"):
             if deletar_aluno(self.aluno_selecionado_id):
                 messagebox.showinfo("Sucesso", "Aluno deletado com sucesso!")
@@ -291,6 +273,7 @@ class CRUDFrame(ctk.CTkFrame):
                 self.carregar_alunos()
             else:
                 messagebox.showerror("Erro", "Falha ao deletar aluno.")
+
 
 # ============================================================
 #                           APP
@@ -315,7 +298,6 @@ class App(ctk.CTk):
         self.container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-
         self.show_splash_screen()
 
     def center_window(self, w, h):
@@ -327,13 +309,10 @@ class App(ctk.CTk):
 
     def show_splash_screen(self):
         self.clear_container()
-
         title = ctk.CTkLabel(self.container, text="Educonnect", font=ctk.CTkFont(size=36, weight="bold"))
         title.pack(expand=True, pady=20)
-
         loading = ctk.CTkLabel(self.container, text="Carregando sistema...", font=ctk.CTkFont(size=14))
         loading.pack(pady=20)
-
         self.after(3000, self.transition_to_login)
 
     def transition_to_login(self, from_logout=False):
@@ -341,7 +320,6 @@ class App(ctk.CTk):
         self.title("Educonnect - Login")
         self.geometry("800x600")
         self.center_window(800,600)
-
         if from_logout:
             self.destroy()
             App().mainloop()
@@ -349,22 +327,16 @@ class App(ctk.CTk):
             self.show_login_screen()
 
     def show_login_screen(self):
-        print("Iniciando Tela de Login...")
         self.clear_container()
-
         frame = LoginFrame(self.container, self)
         frame.grid(row=0, column=0, sticky="nsew")
         self.frames["Login"] = frame
 
     def show_crud_screen(self):
-        print("Login bem-sucedido! Abrindo Tela CRUD.")
         self.clear_container()
-
         crud_frame = CRUDFrame(self.container, self)
         crud_frame.grid(row=0, column=0, sticky="nsew")
         self.frames["CRUD"] = crud_frame
-
-        # 🔥 Correção essencial: força o carregamento de alunos
         crud_frame.carregar_alunos()
 
     def clear_container(self):
