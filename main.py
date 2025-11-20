@@ -205,4 +205,90 @@ class CRUDFrame(ctk.CTkFrame):
 
         if sucesso:
             messagebox.showinfo("Sucesso", f"Aluno {acao} com sucesso!")
-            self.limpar_fo_
+            self.limpar_formulario()
+            self.carregar_alunos()
+        else:
+            messagebox.showerror("Erro", f"Falha ao {acao} o aluno.")
+
+    def deletar_aluno_selecionado(self):
+        if not self.aluno_selecionado_id:
+            messagebox.showwarning("Aviso", "Selecione um aluno na lista para deletar.")
+            return
+        if messagebox.askyesno("Confirmação", f"Tem certeza que deseja deletar o aluno ID {self.aluno_selecionado_id}?"):
+            if deletar_aluno(self.aluno_selecionado_id):
+                messagebox.showinfo("Sucesso", "Aluno deletado com sucesso!")
+                self.limpar_formulario()
+                self.carregar_alunos()
+            else:
+                messagebox.showerror("Erro", "Falha ao deletar aluno.")
+
+
+# ============================================================
+# APP
+# ============================================================
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Educonnect")
+        self.geometry("400x300")
+        self.overrideredirect(True)
+        self.center_window(400,300)
+
+        criar_tabelas()
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.container = ctk.CTkFrame(self)
+        self.container.grid(row=0, column=0, sticky="nsew")
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+        self.show_splash_screen()
+
+    def center_window(self, w, h):
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        x = (sw - w)//2
+        y = (sh - h)//2
+        self.geometry(f"{w}x{h}+{x}+{y}")
+
+    def show_splash_screen(self):
+        self.clear_container()
+        ctk.CTkLabel(self.container, text="Educonnect", font=ctk.CTkFont(size=36, weight="bold")).pack(expand=True, pady=20)
+        ctk.CTkLabel(self.container, text="Carregando sistema...", font=ctk.CTkFont(size=14)).pack(pady=20)
+        self.after(2000, self.transition_to_login)
+
+    def transition_to_login(self, from_logout=False):
+        self.overrideredirect(False)
+        self.title("Educonnect - Login")
+        self.geometry("800x600")
+        self.center_window(800,600)
+
+        if from_logout:
+            self.destroy()
+            App().mainloop()
+        else:
+            self.show_login_screen()
+
+    def show_login_screen(self):
+        self.clear_container()
+        frame = LoginFrame(self.container, self)
+        frame.grid(row=0, column=0, sticky="nsew")
+        self.frames["Login"] = frame
+
+    def show_crud_screen(self):
+        self.clear_container()
+        crud_frame = CRUDFrame(self.container, self)
+        crud_frame.grid(row=0, column=0, sticky="nsew")
+        self.frames["CRUD"] = crud_frame
+        crud_frame.carregar_alunos()
+
+    def clear_container(self):
+        for widget in self.container.winfo_children():
+            widget.destroy()
+
+
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
