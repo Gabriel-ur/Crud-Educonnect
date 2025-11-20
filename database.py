@@ -361,3 +361,40 @@ def deletar_dado(idDADOS):
     except Error as e:
         print("[ERRO] deletar_dado:", e)
         return False
+
+
+# -------------------------------
+# CONSULTA: SITUAÇÃO DOS ALUNOS (JOIN) - NOVA
+# -------------------------------
+def consulta_situacao_alunos(so_abaixo_70=False):
+    """
+    Retorna linhas com:
+      idALUNOS, Nome, Nota, Frequencia, Comportamento, Engajamento
+
+    se so_abaixo_70 for True, filtra apenas registros com Nota < 70.
+    """
+    try:
+        conn = get_conexao()
+        cursor = conn.cursor()
+        if so_abaixo_70:
+            cursor.execute("""
+                SELECT a.idALUNOS, a.Nome, d.Nota, d.Frequencia, d.Comportamento, d.Engajamento
+                FROM alunos a
+                INNER JOIN dados d ON d.ALUNOS_idALUNOS = a.idALUNOS
+                WHERE d.Nota < 70
+                ORDER BY a.idALUNOS
+            """)
+        else:
+            cursor.execute("""
+                SELECT a.idALUNOS, a.Nome, d.Nota, d.Frequencia, d.Comportamento, d.Engajamento
+                FROM alunos a
+                INNER JOIN dados d ON d.ALUNOS_idALUNOS = a.idALUNOS
+                ORDER BY a.idALUNOS
+            """)
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+    except Error as e:
+        print("[ERRO] consulta_situacao_alunos:", e)
+        return []
