@@ -14,7 +14,6 @@ DB_CONFIG = {
 def get_conexao():
     return mysql.connector.connect(**DB_CONFIG)
 
-
 # -------------------------------
 # CRIAR TABELAS
 # -------------------------------
@@ -33,15 +32,14 @@ def criar_tabelas():
 
         conn = get_conexao()
         cursor = conn.cursor()
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS alunos (
-                idALUNOS INT PRIMARY KEY AUTO_INCREMENT,
-                RA INT,
+                idALUNOS INT PRIMARY KEY,
+                RA VARCHAR(50),
                 Nome VARCHAR(45),
                 DataNascimento DATE,
                 Endereco VARCHAR(100),
-                placeholder INT NULL
+                placeholder VARCHAR(255) DEFAULT NULL
             )
         """)
 
@@ -60,11 +58,9 @@ def criar_tabelas():
     except Error as e:
         print("[ERRO] criar_tabelas:", e)
 
-
 # -------------------------------
 # FUNÇÕES DE LOGIN
 # -------------------------------
-
 def hash_senha(senha):
     return bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
 
@@ -107,26 +103,31 @@ def verificar_credenciais(username, senha):
         print("[ERRO] verificar_credenciais:", e)
         return False
 
-
 # -------------------------------
 # CRUD ALUNOS
 # -------------------------------
-
-def inserir_aluno(RA, Nome, DataNascimento, Endereco):
-    """
-    Insere um aluno. placeholder será sempre NULL.
-    DataNascimento deve ser do tipo datetime.date
-    """
+def gerar_novo_id():
     try:
         conn = get_conexao()
         cursor = conn.cursor()
+        cursor.execute("SELECT MAX(idALUNOS) FROM alunos")
+        max_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return 1 if max_id is None else max_id + 1
+    except Error as e:
+        print("[ERRO] gerar_novo_id:", e)
+        return 1
 
-        # Escrevemos NULL diretamente na query
+def inserir_aluno(RA, Nome, DataNascimento, Endereco):
+    try:
+        novo_id = gerar_novo_id()
+        conn = get_conexao()
+        cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO alunos (RA, Nome, DataNascimento, Endereco, placeholder)
-            VALUES (%s, %s, %s, %s, NULL)
-        """, (RA, Nome, DataNascimento, Endereco))
-
+            INSERT INTO alunos (idALUNOS, RA, Nome, DataNascimento, Endereco)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (novo_id, RA, Nome, DataNascimento, Endereco))
         conn.commit()
         cursor.close()
         conn.close()
@@ -134,7 +135,6 @@ def inserir_aluno(RA, Nome, DataNascimento, Endereco):
     except Error as e:
         print("[ERRO] inserir_aluno:", e)
         return False
-
 
 def buscar_alunos():
     try:
@@ -152,7 +152,6 @@ def buscar_alunos():
         print("[ERRO] buscar_alunos:", e)
         return []
 
-
 def buscar_aluno_por_id(idAluno):
     try:
         conn = get_conexao()
@@ -169,12 +168,10 @@ def buscar_aluno_por_id(idAluno):
         print("[ERRO] buscar_aluno_por_id:", e)
         return None
 
-
 def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
-
         cursor.execute("""
             UPDATE alunos SET
                 RA = %s,
@@ -183,17 +180,14 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
                 Endereco = %s
             WHERE idALUNOS = %s
         """, (RA, Nome, DataNascimento, Endereco, idAluno))
-
         conn.commit()
         ok = cursor.rowcount > 0
         cursor.close()
         conn.close()
         return ok
-
     except Error as e:
         print("[ERRO] atualizar_aluno:", e)
         return False
-
 
 def deletar_aluno(idAluno):
     try:
