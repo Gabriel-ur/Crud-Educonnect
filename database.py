@@ -16,7 +16,7 @@ def get_conexao():
 
 
 # -------------------------------
-# CRIAR TABELAS DO JEITO QUE EXISTE NO SEU MYSQL
+# CRIAR TABELAS
 # -------------------------------
 def criar_tabelas():
     try:
@@ -110,17 +110,17 @@ def verificar_credenciais(username, senha):
 
 
 # -------------------------------
-# CRUD REAL COMPATÍVEL COM SUAS COLUNAS
+# CRUD ALUNOS
 # -------------------------------
 
-def inserir_aluno(RA, Nome, DataNascimento, Endereco, placeholder):
+def inserir_aluno(RA, Nome, DataNascimento, Endereco):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO alunos (RA, Nome, DataNascimento, Endereco, placeholder)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (RA, Nome, DataNascimento, Endereco, placeholder))
+            VALUES (%s, %s, %s, %s, NULL)
+        """, (RA, Nome, DataNascimento, Endereco))
         conn.commit()
         cursor.close()
         conn.close()
@@ -134,7 +134,7 @@ def buscar_alunos():
         conn = get_conexao()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT idALUNOS, RA, Nome, DataNascimento, Endereco, placeholder
+            SELECT idALUNOS, RA, Nome, DataNascimento, Endereco
             FROM alunos ORDER BY Nome
         """)
         dados = cursor.fetchall()
@@ -150,7 +150,7 @@ def buscar_aluno_por_id(idAluno):
         conn = get_conexao()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT idALUNOS, RA, Nome, DataNascimento, Endereco, placeholder
+            SELECT idALUNOS, RA, Nome, DataNascimento, Endereco
             FROM alunos WHERE idALUNOS = %s
         """, (idAluno,))
         dado = cursor.fetchone()
@@ -161,7 +161,7 @@ def buscar_aluno_por_id(idAluno):
         print("[ERRO] buscar_aluno_por_id:", e)
         return None
 
-def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco, placeholder):
+def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
@@ -170,10 +170,9 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco, placeholder):
                 RA = %s,
                 Nome = %s,
                 DataNascimento = %s,
-                Endereco = %s,
-                placeholder = %s
+                Endereco = %s
             WHERE idALUNOS = %s
-        """, (RA, Nome, DataNascimento, Endereco, placeholder, idAluno))
+        """, (RA, Nome, DataNascimento, Endereco, idAluno))
         conn.commit()
         ok = cursor.rowcount > 0
         cursor.close()
