@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 
-# Importações do banco de dados (inclui as novas funções de dados)
+# Importações do banco de dados (inclui a nova função consulta_situacao_alunos)
 from database import (
     criar_tabelas,
     inserir_primeiro_usuario,
@@ -17,7 +17,9 @@ from database import (
     buscar_dados,
     buscar_dado_por_id,
     buscar_dado_por_aluno,
-    atualizar_dado
+    atualizar_dado,
+    # relatório (nova)
+    consulta_situacao_alunos
 )
 
 ctk.set_appearance_mode("System")
@@ -107,7 +109,7 @@ class LoginFrame(ctk.CTkFrame):
 
 
 # ============================================================
-# CRUD FRAME (agora com duas abas: Alunos | Dados)
+# CRUD FRAME (agora com três abas: Alunos | Dados | Relatório)
 # ============================================================
 class CRUDFrame(ctk.CTkFrame):
     def __init__(self, master, app_controller):
@@ -118,10 +120,14 @@ class CRUDFrame(ctk.CTkFrame):
         self.aluno_selecionado_id = None
         self.dado_selecionado_id = None
 
+        # flag filtro relatório
+        self.filter_below_70 = False
+
         # tabview
         self.tabview = ctk.CTkTabview(self, width=1100)
         self.tabview.add("Alunos")
         self.tabview.add("Dados")
+        self.tabview.add("Relatório")
         self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
 
         # === Aba ALUNOS ===
@@ -131,6 +137,10 @@ class CRUDFrame(ctk.CTkFrame):
         # === Aba DADOS ===
         self.tab_dados = self.tabview.tab("Dados")
         self._build_dados_tab(self.tab_dados)
+
+        # === Aba RELATÓRIO ===
+        self.tab_relatorio = self.tabview.tab("Relatório")
+        self._build_relatorio_tab(self.tab_relatorio)
 
     # ----------------- construção da aba Alunos (mantém comportamentos anteriores) ------------
     def _build_alunos_tab(self, container):
@@ -158,8 +168,8 @@ class CRUDFrame(ctk.CTkFrame):
         self.delete_button = ctk.CTkButton(action_buttons_frame, text="🗑️ Deletar Aluno", fg_color="red", hover_color="darkred", command=self.deletar_aluno_selecionado)
         self.delete_button.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
-        # botão para recarregar dados (alunos + dados)
-        self.refresh_button = ctk.CTkButton(action_buttons_frame, text="🔄 Recarregar", command=self.carregar_alunos)
+        # botão para recarregar dados (alunos + dados + relatorio)
+        self.refresh_button = ctk.CTkButton(action_buttons_frame, text="🔄 Recarregar", command=self._recarregar_tudo)
         self.refresh_button.grid(row=0, column=1, padx=5, sticky="ew")
 
         # botão para trocar para aba Dados
@@ -249,6 +259,29 @@ class CRUDFrame(ctk.CTkFrame):
 
         # carrega lista inicial de dados
         self.carregar_dados()
+
+    # ----------------- construção da aba Relatório ------------
+    def _build_relatorio_tab(self, container):
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_rowconfigure(0, weight=1)
+
+        top_frame = ctk.CTkFrame(container)
+        top_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,5))
+        top_frame.grid_columnconfigure((0,1), weight=1)
+
+        ctk.CTkLabel(top_frame, text="📋 Relatório: Situação dos alunos (dados completos)", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, sticky="w", padx=6)
+
+        # botão de filtro (toggle)
+        self.toggle_filter_button = ctk.CTkButton(top_frame, text="🔎 Mostrar Nota < 70", command=self._toggle_filter_relatorio)
+        self.toggle_filter_button.grid(row=0, column=1, sticky="e", padx=6)
+
+        # área scroll com o relatório
+        self.relatorio_frame = ctk.CTkScrollableFrame(container, label_text="Relatório (Clique para selecionar linha)")
+        self.relatorio_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0,10))
+        self.relatorio_frame.grid_columnconfigure(0, weight=1)
+
+        # carrega inicialmente
+        self.carregar_relatorio()
 
     # ---------------- ALUNOS: funções (mantidas/adaptadas) ----------------
     def carregar_alunos(self):
@@ -361,9 +394,10 @@ class CRUDFrame(ctk.CTkFrame):
         if sucesso:
             messagebox.showinfo("Sucesso", f"Aluno {acao} com sucesso!")
             self.limpar_formulario_aluno()
-            # recarrega também a aba Dados para manter consistência
+            # recarrega também a aba Dados e Relatório para manter consistência
             self.carregar_alunos()
             self.carregar_dados()
+            self.carregar_relatorio()
         else:
             messagebox.showerror("Erro", f"Falha ao {acao} o aluno.")
 
@@ -377,6 +411,7 @@ class CRUDFrame(ctk.CTkFrame):
                 self.limpar_formulario_aluno()
                 self.carregar_alunos()
                 self.carregar_dados()
+                self.carregar_relatorio()
             else:
                 messagebox.showerror("Erro", "Falha ao deletar aluno.")
 
@@ -511,8 +546,54 @@ class CRUDFrame(ctk.CTkFrame):
             self.carregar_dados()
             # recarrega alunos também em caso de dependências
             self.carregar_alunos()
+            # atualiza relatório automaticamente
+            self.carregar_relatorio()
         else:
             messagebox.showerror("Erro", "Falha ao atualizar o registro de dados.")
+
+
+    # ---------------- RELATÓRIO: funções ----------------
+    def carregar_relatorio(self):
+        # limpa lista
+        for widget in self.relatorio_frame.winfo_children():
+            widget.destroy()
+
+        # pega dados via consulta (join)
+        rows = consulta_situacao_alunos(so_abaixo_70=self.filter_below_70)
+
+        headers = ["ID", "Nome", "Nota", "Frequencia", "Comportamento", "Engajamento"]
+        header_frame = ctk.CTkFrame(self.relatorio_frame, fg_color=("gray80","gray25"))
+        header_frame.pack(fill="x", padx=0, pady=(0,5))
+        header_frame.columnconfigure(tuple(range(len(headers))), weight=1)
+
+        for col, text in enumerate(headers):
+            ctk.CTkLabel(header_frame, text=text, font=ctk.CTkFont(weight="bold")).grid(row=0, column=col, padx=5, pady=5, sticky="w")
+
+        for row_data in rows:
+            idALUNOS, Nome, Nota, Frequencia, Comportamento, Engajamento = row_data
+            row = ctk.CTkFrame(self.relatorio_frame, fg_color="transparent")
+            row.pack(fill="x", padx=0, pady=2)
+            row.columnconfigure(tuple(range(len(headers))), weight=1)
+
+            valores = [idALUNOS, Nome, Nota, Frequencia, Comportamento, Engajamento]
+            for col, val in enumerate(valores):
+                label = ctk.CTkLabel(row, text=str(val), anchor="w")
+                label.grid(row=0, column=col, padx=5, sticky="w")
+
+    def _toggle_filter_relatorio(self):
+        # alterna flag e atualiza botão + recarrega relatório
+        self.filter_below_70 = not self.filter_below_70
+        if self.filter_below_70:
+            self.toggle_filter_button.configure(text="🔎 Mostrar Todos")
+        else:
+            self.toggle_filter_button.configure(text="🔎 Mostrar Nota < 70")
+        self.carregar_relatorio()
+
+    # ---------------- utilitário: recarrega todos os painéis -------------
+    def _recarregar_tudo(self):
+        self.carregar_alunos()
+        self.carregar_dados()
+        self.carregar_relatorio()
 
 
 # ============================================================
