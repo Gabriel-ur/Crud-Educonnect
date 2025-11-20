@@ -266,7 +266,8 @@ class CRUDFrame(ctk.CTkFrame):
         container.grid_rowconfigure(0, weight=1)
 
         top_frame = ctk.CTkFrame(container)
-        top_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,5))
+        # reduzimos o padding inferior do top_frame para diminuir o espaço entre título e tabela
+        top_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,2))
         top_frame.grid_columnconfigure((0,1), weight=1)
 
         ctk.CTkLabel(top_frame, text="📋 Relatório: Situação dos alunos (dados completos)", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, sticky="w", padx=6)
@@ -277,7 +278,8 @@ class CRUDFrame(ctk.CTkFrame):
 
         # área scroll com o relatório
         self.relatorio_frame = ctk.CTkScrollableFrame(container, label_text="Relatório (Clique para selecionar linha)")
-        self.relatorio_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0,10))
+        # diminuímos também o spacing entre frame do título e relatorio_frame
+        self.relatorio_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0,5))
         self.relatorio_frame.grid_columnconfigure(0, weight=1)
 
         # carrega inicialmente
