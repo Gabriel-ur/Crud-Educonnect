@@ -37,11 +37,11 @@ def criar_tabelas():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS alunos (
                 idALUNOS INT PRIMARY KEY AUTO_INCREMENT,
-                RA VARCHAR(50),
-                Nome VARCHAR(255),
-                DataNascimento VARCHAR(50),
-                Endereco VARCHAR(255),
-                placeholder VARCHAR(255)
+                RA INT,
+                Nome VARCHAR(45),
+                DataNascimento DATE,
+                Endereco VARCHAR(100),
+                placeholder INT
             )
         """)
 
@@ -117,12 +117,10 @@ def inserir_aluno(RA, Nome, DataNascimento, Endereco, placeholder):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
-
         cursor.execute("""
             INSERT INTO alunos (RA, Nome, DataNascimento, Endereco, placeholder)
             VALUES (%s, %s, %s, %s, %s)
         """, (RA, Nome, DataNascimento, Endereco, placeholder))
-
         conn.commit()
         cursor.close()
         conn.close()
@@ -130,7 +128,6 @@ def inserir_aluno(RA, Nome, DataNascimento, Endereco, placeholder):
     except Error as e:
         print("[ERRO] inserir_aluno:", e)
         return False
-
 
 def buscar_alunos():
     try:
@@ -148,7 +145,6 @@ def buscar_alunos():
         print("[ERRO] buscar_alunos:", e)
         return []
 
-
 def buscar_aluno_por_id(idAluno):
     try:
         conn = get_conexao()
@@ -165,12 +161,10 @@ def buscar_aluno_por_id(idAluno):
         print("[ERRO] buscar_aluno_por_id:", e)
         return None
 
-
 def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco, placeholder):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
-
         cursor.execute("""
             UPDATE alunos SET
                 RA = %s,
@@ -180,17 +174,14 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco, placeholder):
                 placeholder = %s
             WHERE idALUNOS = %s
         """, (RA, Nome, DataNascimento, Endereco, placeholder, idAluno))
-
         conn.commit()
         ok = cursor.rowcount > 0
         cursor.close()
         conn.close()
         return ok
-
     except Error as e:
         print("[ERRO] atualizar_aluno:", e)
         return False
-
 
 def deletar_aluno(idAluno):
     try:
