@@ -1,7 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
-from datetime import datetime
 
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -57,7 +56,6 @@ def criar_tabelas():
         conn.commit()
         cursor.close()
         conn.close()
-
         print("Tabelas OK.")
     except Error as e:
         print("[ERRO] criar_tabelas:", e)
@@ -123,9 +121,10 @@ def inserir_aluno(RA, Nome, DataNascimento, Endereco):
         conn = get_conexao()
         cursor = conn.cursor()
 
+        # Escrevemos NULL diretamente na query
         cursor.execute("""
             INSERT INTO alunos (RA, Nome, DataNascimento, Endereco, placeholder)
-            VALUES (%s, %s, %s, NULL)
+            VALUES (%s, %s, %s, %s, NULL)
         """, (RA, Nome, DataNascimento, Endereco))
 
         conn.commit()
