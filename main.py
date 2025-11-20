@@ -17,6 +17,7 @@ from database import (
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
+
 # ============================================================
 # LOGIN FRAME
 # ============================================================
@@ -151,7 +152,6 @@ class CRUDFrame(ctk.CTkFrame):
         if aluno:
             self.aluno_selecionado_id = aluno_id
             RA, Nome, DataNascimento, Endereco = aluno[1:]
-
             for key, (entry, tipo) in self.entries.items():
                 entry.delete(0, tk.END)
                 if key == "RA":
@@ -162,7 +162,6 @@ class CRUDFrame(ctk.CTkFrame):
                     entry.insert(0, DataNascimento.strftime("%d%m%Y") if DataNascimento else "")
                 elif key == "Endereco":
                     entry.insert(0, Endereco)
-
             self.save_button.configure(text="💾 Atualizar Aluno Existente", fg_color="orange", hover_color="#cc8800")
 
     def limpar_formulario(self):
@@ -172,30 +171,28 @@ class CRUDFrame(ctk.CTkFrame):
         self.save_button.configure(text="➕ Salvar Novo Aluno", fg_color="green", hover_color="darkgreen")
 
     def validar_dados(self, dados):
-        try:
-            dados_tipados = []
-            for (entry, tipo), valor in zip(self.entries.values(), dados):
+        dados_tipados = []
+        for (entry, tipo), valor in zip(self.entries.values(), dados):
+            try:
                 if tipo == "int":
                     dados_tipados.append(int(valor))
                 elif tipo == "date":
-                    # converte ddmmyyyy -> yyyy-mm-dd
-                    dt = datetime.strptime(valor, "%d%m%Y")
+                    valor_limpo = valor.replace("/", "")
+                    dt = datetime.strptime(valor_limpo, "%d%m%Y")
                     dados_tipados.append(dt.date())
                 else:
                     dados_tipados.append(valor)
-            return dados_tipados
-        except ValueError:
-            messagebox.showerror("Erro", "RA deve ser número e Data de Nasc. deve estar no formato ddmmyyyy.")
-            return None
+            except Exception:
+                messagebox.showerror("Erro", f"O campo '{entry.get()}' está incorreto. Verifique o valor digitado.")
+                return None
+        return dados_tipados
 
     def salvar_aluno(self):
         dados_raw = [entry.get() for entry, _ in self.entries.values()]
         dados_validados = self.validar_dados(dados_raw)
         if not dados_validados:
             return
-
         RA, Nome, DataNascimento, Endereco = dados_validados
-
         if self.aluno_selecionado_id:
             sucesso = atualizar_aluno(self.aluno_selecionado_id, RA, Nome, DataNascimento, Endereco)
             acao = "atualizado"
@@ -264,7 +261,6 @@ class App(ctk.CTk):
         self.title("Educonnect - Login")
         self.geometry("800x600")
         self.center_window(800,600)
-
         if from_logout:
             self.destroy()
             App().mainloop()
