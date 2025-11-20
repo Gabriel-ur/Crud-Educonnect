@@ -263,10 +263,13 @@ class CRUDFrame(ctk.CTkFrame):
     # ----------------- construção da aba Relatório ------------
     def _build_relatorio_tab(self, container):
         container.grid_columnconfigure(0, weight=1)
-        container.grid_rowconfigure(0, weight=1)
+        # evita que o top_frame "cresça" verticalmente e empurre a tabela para baixo
+        container.grid_rowconfigure(0, weight=0)
+        container.grid_rowconfigure(1, weight=1)
 
         top_frame = ctk.CTkFrame(container)
-        top_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10,5))
+        # sticky "ew" para não expandir verticalmente (mantém espaçamento igual aos outros)
+        top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(10,5))
         top_frame.grid_columnconfigure((0,1), weight=1)
 
         ctk.CTkLabel(top_frame, text="📋 Relatório: Situação dos alunos (dados completos)", font=ctk.CTkFont(size=18, weight="bold")).grid(row=0, column=0, sticky="w", padx=6)
