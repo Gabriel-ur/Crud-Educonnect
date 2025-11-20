@@ -19,7 +19,6 @@ def get_conexao():
 # -------------------------------
 def criar_tabelas():
     try:
-        # cria database se necessário
         conn = mysql.connector.connect(
             host=DB_CONFIG["host"],
             port=DB_CONFIG["port"],
@@ -31,11 +30,10 @@ def criar_tabelas():
         cursor.close()
         conn.close()
 
-        # conecta ao database e cria tabelas se não existirem
         conn = get_conexao()
         cursor = conn.cursor()
 
-        # tabela alunos (observação: mantemos sem AUTO_INCREMENT porque você preferiu não alterar o MySQL)
+        # tabela alunos
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS alunos (
                 idALUNOS INT PRIMARY KEY,
@@ -56,7 +54,7 @@ def criar_tabelas():
             )
         """)
 
-        # tabela dados (relacionada a alunos)
+        # tabela dados
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS dados (
                 idDADOS INT PRIMARY KEY,
@@ -74,7 +72,6 @@ def criar_tabelas():
         print("Tabelas OK.")
     except Error as e:
         print("[ERRO] criar_tabelas:", e)
-
 
 # -------------------------------
 # FUNÇÕES DE LOGIN
@@ -121,9 +118,8 @@ def verificar_credenciais(username, senha):
         print("[ERRO] verificar_credenciais:", e)
         return False
 
-
 # -------------------------------
-# CRUD ALUNOS (mantido)
+# CRUD ALUNOS
 # -------------------------------
 def gerar_novo_id_alunos():
     try:
@@ -139,25 +135,14 @@ def gerar_novo_id_alunos():
         return 1
 
 def inserir_aluno(RA, Nome, DataNascimento, Endereco):
-    """
-    Insere um aluno. Se a tabela não tiver AUTO_INCREMENT, o app gera id.
-    DataNascimento deve ser string 'YYYY-MM-DD' ou objeto date; MySQL connector aceita ambos.
-    """
     try:
-        # gera id se necessário
         conn = get_conexao()
         cursor = conn.cursor()
-        # Verifica se há alguma linha com idALUNOS NULL ou se é necessário gerar
-        cursor.execute("SELECT COUNT(*) FROM alunos")
-        _ = cursor.fetchone()[0]  # apenas para garantir conexão ok
-
         novo_id = gerar_novo_id_alunos()
-
         cursor.execute("""
             INSERT INTO alunos (idALUNOS, RA, Nome, DataNascimento, Endereco, placeholder)
             VALUES (%s, %s, %s, %s, %s, NULL)
         """, (novo_id, RA, Nome, DataNascimento, Endereco))
-
         conn.commit()
         cursor.close()
         conn.close()
@@ -172,7 +157,7 @@ def buscar_alunos():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT idALUNOS, RA, Nome, DataNascimento, Endereco
-            FROM alunos ORDER BY Nome
+            FROM alunos ORDER BY idALUNOS
         """)
         dados = cursor.fetchall()
         cursor.close()
@@ -202,7 +187,6 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
     try:
         conn = get_conexao()
         cursor = conn.cursor()
-
         cursor.execute("""
             UPDATE alunos SET
                 RA = %s,
@@ -211,13 +195,11 @@ def atualizar_aluno(idAluno, RA, Nome, DataNascimento, Endereco):
                 Endereco = %s
             WHERE idALUNOS = %s
         """, (RA, Nome, DataNascimento, Endereco, idAluno))
-
         conn.commit()
         ok = cursor.rowcount > 0
         cursor.close()
         conn.close()
         return ok
-
     except Error as e:
         print("[ERRO] atualizar_aluno:", e)
         return False
@@ -236,9 +218,8 @@ def deletar_aluno(idAluno):
         print("[ERRO] deletar_aluno:", e)
         return False
 
-
 # -------------------------------
-# CRUD "DADOS" (nova tabela)
+# CRUD DADOS
 # -------------------------------
 def gerar_novo_id_dados():
     try:
@@ -253,32 +234,7 @@ def gerar_novo_id_dados():
         print("[ERRO] gerar_novo_id_dados:", e)
         return 1
 
-def inserir_dado(Nota, Frequencia, Comportamento, Engajamento, ALUNOS_idALUNOS):
-    """
-    Insere novo registro na tabela dados.
-    Observação: sua regra atual pede que o app NÃO crie novos registros na UI de 'Dados',
-    mas a função existe caso queira inserir programaticamente.
-    """
-    try:
-        novo_id = gerar_novo_id_dados()
-        conn = get_conexao()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO dados (idDADOS, Nota, Frequencia, Comportamento, Engajamento, ALUNOS_idALUNOS)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (novo_id, Nota, Frequencia, Comportamento, Engajamento, ALUNOS_idALUNOS))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-    except Error as e:
-        print("[ERRO] inserir_dado:", e)
-        return False
-
 def buscar_dados():
-    """
-    Retorna todos os dados: idDADOS, Nota, Frequencia, Comportamento, Engajamento, ALUNOS_idALUNOS
-    """
     try:
         conn = get_conexao()
         cursor = conn.cursor()
@@ -346,18 +302,4 @@ def atualizar_dado(idDADOS, Nota, Frequencia, Comportamento, Engajamento, ALUNOS
         return ok
     except Error as e:
         print("[ERRO] atualizar_dado:", e)
-        return False
-
-def deletar_dado(idDADOS):
-    try:
-        conn = get_conexao()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM dados WHERE idDADOS = %s", (idDADOS,))
-        conn.commit()
-        ok = cursor.rowcount > 0
-        cursor.close()
-        conn.close()
-        return ok
-    except Error as e:
-        print("[ERRO] deletar_dado:", e)
         return False
