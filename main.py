@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 
-# Importações do banco de dados (inclui a nova função consulta_situacao_alunos)
+# Importações do banco de dados
 from database import (
     criar_tabelas,
     inserir_primeiro_usuario,
@@ -18,7 +18,7 @@ from database import (
     buscar_dado_por_id,
     buscar_dado_por_aluno,
     atualizar_dado,
-    # relatório (nova)
+    # relatório
     consulta_situacao_alunos
 )
 
@@ -26,7 +26,7 @@ ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
 
-# --------------------------- FUNÇÃO AUXILIAR (Data)
+# FUNÇÃO AUXILIAR (Data)
 def converter_data_para_mysql(valor):
     """
     Recebe 'ddmmyyyy' ou 'dd/mm/yyyy' ou 'dd-mm-yyyy' e retorna 'YYYY-MM-DD' (string).
@@ -109,7 +109,7 @@ class LoginFrame(ctk.CTkFrame):
 
 
 # ============================================================
-# CRUD FRAME (agora com três abas: Alunos | Dados | Relatório)
+# CRUD FRAME 
 # ============================================================
 class CRUDFrame(ctk.CTkFrame):
     def __init__(self, master, app_controller):
@@ -142,9 +142,8 @@ class CRUDFrame(ctk.CTkFrame):
         self.tab_relatorio = self.tabview.tab("Relatório")
         self._build_relatorio_tab(self.tab_relatorio)
 
-    # ----------------- construção da aba Alunos (mantém comportamentos anteriores) ------------
+    # Construção da aba Alunos
     def _build_alunos_tab(self, container):
-        # layout semelhante ao anterior: left list, right form
         container.grid_columnconfigure(0, weight=3)
         container.grid_columnconfigure(1, weight=1)
         container.grid_rowconfigure(0, weight=1)
@@ -182,7 +181,7 @@ class CRUDFrame(ctk.CTkFrame):
 
         ctk.CTkLabel(self.right_panel, text="✏️ Cadastro / Edição (Alunos)", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(10,15))
 
-        # campos de aluno (mantidos)
+        # campos de aluno
         self.entries_aluno = {}
         campos = [("RA", "text"), ("Nome", "text"), ("DataNascimento", "date"), ("Endereco", "text")]
 
@@ -201,7 +200,7 @@ class CRUDFrame(ctk.CTkFrame):
         # carrega lista inicial
         self.carregar_alunos()
 
-    # ----------------- construção da aba Dados ------------
+    # Construção da aba Dados
     def _build_dados_tab(self, container):
         container.grid_columnconfigure(0, weight=3)
         container.grid_columnconfigure(1, weight=1)
@@ -260,15 +259,14 @@ class CRUDFrame(ctk.CTkFrame):
         # carrega lista inicial de dados
         self.carregar_dados()
 
-    # ----------------- construção da aba Relatório ------------
+    # Construção da aba Relatório
     def _build_relatorio_tab(self, container):
         container.grid_columnconfigure(0, weight=1)
-        # evita que o top_frame "cresça" verticalmente e empurre a tabela para baixo
+
         container.grid_rowconfigure(0, weight=0)
         container.grid_rowconfigure(1, weight=1)
 
         top_frame = ctk.CTkFrame(container)
-        # sticky "ew" para não expandir verticalmente (mantém espaçamento igual aos outros)
         top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(10,5))
         top_frame.grid_columnconfigure((0,1), weight=1)
 
@@ -286,7 +284,7 @@ class CRUDFrame(ctk.CTkFrame):
         # carrega inicialmente
         self.carregar_relatorio()
 
-    # ---------------- ALUNOS: funções (mantidas/adaptadas) ----------------
+    # ALUNOS: funções
     def carregar_alunos(self):
         # limpa
         for widget in self.alunos_list_frame.winfo_children():
@@ -419,7 +417,7 @@ class CRUDFrame(ctk.CTkFrame):
                 messagebox.showerror("Erro", "Falha ao deletar aluno.")
 
 
-    # ---------------- DADOS: funções ----------------
+    # DADOS: funções
     def carregar_dados(self):
         # limpa lista
         for widget in self.dados_list_frame.winfo_children():
@@ -524,7 +522,6 @@ class CRUDFrame(ctk.CTkFrame):
             raise
 
     def atualizar_dado_selecionado(self):
-        # Conforme pediu: NÃO criar novos registros nesta aba — apenas atualizar existentes
         if not self.dado_selecionado_id:
             messagebox.showerror("Operação proibida", "Selecione um registro existente de 'Dados' para atualizar. Não é permitido criar novos registros nesta aba.")
             return
@@ -555,7 +552,7 @@ class CRUDFrame(ctk.CTkFrame):
             messagebox.showerror("Erro", "Falha ao atualizar o registro de dados.")
 
 
-    # ---------------- RELATÓRIO: funções ----------------
+    # RELATÓRIO: funções
     def carregar_relatorio(self):
         # limpa lista
         for widget in self.relatorio_frame.winfo_children():
@@ -592,7 +589,7 @@ class CRUDFrame(ctk.CTkFrame):
             self.toggle_filter_button.configure(text="🔎 Mostrar Nota < 70")
         self.carregar_relatorio()
 
-    # ---------------- utilitário: recarrega todos os painéis -------------
+    # Utilitário: recarrega todos os painéis
     def _recarregar_tudo(self):
         self.carregar_alunos()
         self.carregar_dados()
