@@ -35,7 +35,7 @@ def criar_tabelas():
         conn = get_conexao()
         cursor = conn.cursor()
 
-        # tabela alunos (observação: mantemos sem AUTO_INCREMENT porque você preferiu não alterar o MySQL)
+        # tabela alunos
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS alunos (
                 idALUNOS INT PRIMARY KEY,
@@ -123,7 +123,7 @@ def verificar_credenciais(username, senha):
 
 
 # -------------------------------
-# CRUD ALUNOS (mantido)
+# CRUD ALUNOS
 # -------------------------------
 def gerar_novo_id_alunos():
     try:
@@ -238,7 +238,7 @@ def deletar_aluno(idAluno):
 
 
 # -------------------------------
-# CRUD "DADOS" (nova tabela)
+# CRUD DADOS
 # -------------------------------
 def gerar_novo_id_dados():
     try:
@@ -364,7 +364,7 @@ def deletar_dado(idDADOS):
 
 
 # -------------------------------
-# CONSULTA: SITUAÇÃO DOS ALUNOS (JOIN) - NOVA
+# CONSULTA: SITUAÇÃO DOS ALUNOS (JOIN)
 # -------------------------------
 def consulta_situacao_alunos(so_abaixo_70=False):
     """
